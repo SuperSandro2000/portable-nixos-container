@@ -6,43 +6,49 @@
 
   e.g. on debian: `apt install systemd-container`
 
-3. As root install container-system
+3. Clone repository and cd into it
 
-  `nix-env -iE 'f: import "${builtins.fetchGit http://github.com/corngood/portable-nixos-container.git}/container-system.nix"'`
+4. As root install container-system
 
-4. Symlink systemd units into host system
+  `nix-build container-system.nix`
+
+5. Symlink systemd units into host system.
 
   ```
-  ln -s ~/.nix-profile/etc/systemd/system/{nat,container@}.service /etc/systemd/system
+  sudo ln -fs result/etc/systemd/system/{nat,container@}.service /etc/systemd/system
   systemctl daemon-reload
   ```
 
-5. Start and enable nat service (required for containers to have network access)
+6. Start and enable nat service (required for containers to have network access)
 
   ```
   systemctl start nat
   mkdir -p /etc/systemd/system/network.target.wants
-  ln -s ~/.nix-profile/etc/systemd/system/nat.service /etc/systemd/system/network.target.wants
+  ln -s result/etc/systemd/system/nat.service /etc/systemd/system/network.target.wants
   ```
 
-6. Create containers using `nixos-container` or by deploying with `nixops`
+7. Create containers using `nixos-container` or by deploying with `nixops`
+
+  ```
+  sudo -E result/bin/nixos-container create [NAME]
+  ```
 
 7. Permanently enable a container
 
-  `ln -s /etc/systemd/system/container@.service /etc/systemd/system/multi-user.target.wants/container@[container-name].service`
+  `ln -s /etc/systemd/system/container@.service /etc/systemd/system/multi-user.target.wants/container@[NAME].service`
 
 8. Expose ports
 
-  Edit `/etc/containers/[container-name].conf` and add to `HOST_PORT`.  Each word will correspond to the value of a `systemd-nspawn` `--port` argument.
+  Edit `/etc/containers/[NAME].conf` and add to `HOST_PORT`.  Each word will correspond to the value of a `systemd-nspawn` `--port` argument.
 
-  You must restart the container for configuration changes to have an effect `systemctl restart container@[container-name]`.
+  You must restart the container for configuration changes to have an effect `systemctl restart container@[NAME]`.
 
   **WARNING** these ports may not be forwarded from the loopback interface.
 
 9. Configure `systemd-nspawn`
 
-  Edit `/etc/containers/[container-name].conf` and add `EXTRA_NSPAWN_FLAGS`.  This variable will be appended to the nspawn arguments, and can contain anything from `man systemd-nspawn`.
+  Edit `/etc/containers/[NAME].conf` and add `EXTRA_NSPAWN_FLAGS`.  This variable will be appended to the nspawn arguments, and can contain anything from `man systemd-nspawn`.
 
   e.g. to create a bind mount: `--bind=/mnt/container/var:/var`
 
-  `systemd-nspawn` may also be configured using `/etc/systemd/nspawn/[container-name].nspawn` according to the manual.
+  `systemd-nspawn` may also be configured using `/etc/systemd/nspawn/[NAME].nspawn` according to the manual.
