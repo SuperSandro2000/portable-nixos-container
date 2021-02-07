@@ -35,7 +35,7 @@
 
 7. Permanently enable a container
 
-  `ln -s /etc/systemd/system/container@.service /etc/systemd/system/multi-user.target.wants/container@[NAME].service`
+  `sudo ln -s /etc/systemd/system/container@.service /etc/systemd/system/multi-user.target.wants/container@[NAME].service`
 
 8. Expose ports
 
